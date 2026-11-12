@@ -1,4 +1,4 @@
-# OBIX POCKETSHIELD v1.0.2 — Hacker Edition Verification Report
+# TUIzACK v1.0.2 — Hacker Edition Verification Report
 
 ## Current automated checks completed in this release run
 

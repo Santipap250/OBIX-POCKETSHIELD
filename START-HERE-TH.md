@@ -1,4 +1,4 @@
-# เริ่มใช้งาน OBIX POCKETSHIELD v1.0.2
+# เริ่มใช้งาน TUIzACK v1.0.2
 
 ## นำขึ้น GitHub
 

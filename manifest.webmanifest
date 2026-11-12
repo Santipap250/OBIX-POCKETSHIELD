@@ -1,7 +1,7 @@
 {
-  "name": "OBIX POCKETSHIELD // CYBER OPS",
-  "short_name": "POCKETSHIELD",
-  "description": "Privacy-first hacker-style security toolkit. Local processing, no tracking, no cloud upload.",
+  "name": "TUIzACK // CYBER OPS",
+  "short_name": "TUIzACK",
+  "description": "Local-first security and developer toolkit. Inspect locally and keep control.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

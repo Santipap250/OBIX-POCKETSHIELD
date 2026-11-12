@@ -1,8 +1,8 @@
-# OBIX POCKETSHIELD v1.0.2 — CYBER OPS
+# TUIzACK v1.0.2 — CYBER OPS
 
 **Privacy-first hacker-style security toolkit and installable PWA.**
 
-OBIX POCKETSHIELD is a static application that performs its security and developer utilities in the browser. It has no account requirement, paid API dependency, backend database, analytics or tracking service.
+TUIzACK is a static application that performs its security and developer utilities in the browser. It has no account requirement, paid API dependency, backend database, analytics or tracking service.
 
 ## Modules
 
@@ -65,3 +65,14 @@ Load the app once while online before testing its offline app shell.
 ## License
 
 MIT. See `LICENSE`.
+
+
+## วิธีใช้งาน TUIzACK
+
+เริ่มจากหน้า Home แล้วเลือกโมดูลจากเมนูด้านล่างหรือช่องค้นหา หากต้องการดูภาพรวม ให้เปิด **How to use** เพื่ออ่าน quick flow และข้อจำกัดของแต่ละกลุ่มเครื่องมือ
+
+สำหรับการใช้งานทั่วไป ให้เลือก Password Lab เพื่อสร้าง password/passphrase, AES Encryption เพื่อเข้ารหัสข้อความหรือไฟล์, Hash Engine เพื่อคำนวณ digest, URL Inspector เพื่อดูสัญญาณ URL ที่น่าสงสัย, JWT Inspector เพื่อ decode โครงสร้าง token, Header Audit เพื่อวิเคราะห์ header ที่ป้อนเอง, QR Scanner เพื่ออ่าน QR ใน browser ที่รองรับ, Safe Cyber Lab เพื่อเรียนรู้ผ่าน simulation และ Dev Toolbox สำหรับงานแปลงข้อมูล
+
+ข้อมูลสำคัญจะประมวลผลใน browser แต่ผู้ใช้ควรอ่านป้ายกำกับ เช่น `LOCAL`, `NOT VERIFIED`, `SIMULATION ONLY` และคำเตือนใต้ผลลัพธ์ทุกครั้ง เพราะ URL Inspector และ password strength เป็น heuristic ไม่ใช่การรับประกันความปลอดภัย และ JWT Inspector ไม่ได้ verify signature
+
+แบรนด์ใหม่ **TUIzACK** ใช้สี cyan เป็น identity หลัก แต่ยังคงสีเขียวสำหรับสถานะ local/healthy และคง reduced-motion fallback สำหรับผู้ใช้ที่ปิด animation ในระบบ

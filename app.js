@@ -6,7 +6,7 @@ const enc = new TextEncoder();
 const dec = new TextDecoder('utf-8', { fatal: true });
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const NAV = [
-  ['home','HOME','⌂','หน้าแรก'],['pw','PASSWORD','⌘','รหัสผ่าน'],['aes','AES','⬡','เข้ารหัส'],['hash','HASH','#','แฮช'],['url','URL','⌁','ตรวจลิงก์'],
+  ['home','HOME','⌂','หน้าแรก'],['guide','GUIDE','?','วิธีใช้'],['pw','PASSWORD','⌘','รหัสผ่าน'],['aes','AES','⬡','เข้ารหัส'],['hash','HASH','#','แฮช'],['url','URL','⌁','ตรวจลิงก์'],
   ['jwt','JWT','◈','โทเคน'],['hdr','HEADERS','▤','ส่วนหัวเว็บ'],['qr','QR','▦','สแกน QR'],['lab','CYBER LAB','⚑','ห้องทดลอง'],['dev','DEV TOOLS','</>','เครื่องมือ Dev']
 ];
 const TOOL_META = {
