@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.2-wip (partial, not a final release)
+- Fixed: password strength estimator no longer scores repetitive/sequential/keyboard/common passwords as strong (new `strength.js`, pattern-aware, local only, no entropy claim for typed passwords).
+- Passphrase: default 7 words (6-10), no predictable numeric suffix, entropy shown as words x log2(list size). Wordlist is STILL only 80 words, so passphrases remain weak. A verified list of 2,048+ words is still required.
+- Added `tests/strength.test.js` (regression cases incl. aaaa..., 1234567890..., password123, qwerty123456, abcdefghijklmnop, 1q2w3e4r5t6y).
+- Service worker cache bumped to v1.0.2 and precaches `strength.js`.
+- NOT done: jsQR fallback, Playwright E2E, CI workflow, CSP/offline browser verification, PR/merge/deploy.
+
+
 ## v1.0.1 — Premium hardening release
 
 - Reworked the dashboard into a responsive premium dark interface with a champagne-gold security identity.

@@ -1,6 +1,6 @@
 {
   "name": "obix-pocketshield",
-  "version": "1.0.1",
+  "version": "1.0.2-wip",
   "private": true,
   "description": "Privacy-first security toolkit and premium responsive PWA (static, browser-local)",
   "license": "MIT",
