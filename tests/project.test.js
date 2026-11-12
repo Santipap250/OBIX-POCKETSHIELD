@@ -19,7 +19,7 @@ test('TUIzACK branding and usage guide are present',()=>{
  assert.match(html,/TUIzACK PRINCIPLE/);
  const manifest=JSON.parse(read('manifest.webmanifest'));
  assert.equal(manifest.short_name,'TUIzACK');
- assert.match(read('sw.js'),/tuizack-cyber-v1\.0\.4/);
+ assert.match(read('sw.js'),/tuizack-cyber-v1\.0\.5/);
  assert.match(html,/class="home-bg-video"/);
  assert.match(html,/assets\/tuizack-cyber-bg\.mp4/);
  assert.match(html,/assets\/hacker-bg-9x16\.jpg/);

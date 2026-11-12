@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_NAME='tuizack-cyber-v1.0.4';
+const CACHE_NAME='tuizack-cyber-v1.0.5';
 const PRECACHE=['/','/index.html','/style.css','/wordlist.js','/core.js','/app.js','/manifest.webmanifest','/icons/icon.svg','/icons/icon-192.png','/icons/icon-512.png'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(PRECACHE)));
