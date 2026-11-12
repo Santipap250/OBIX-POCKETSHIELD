@@ -1,0 +1,11 @@
+{
+  "name": "obix-pocketshield",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Privacy-first security toolkit and premium responsive PWA (static, browser-local)",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/validate.js",
+    "test": "node --test tests/*.test.js"
+  }
+}
