@@ -306,7 +306,7 @@ function initPrivacy(){
 function boot(){
   if(!C){toast('Security core failed to load');return;}
   initDashboard();initPassword();initAES();initHash();initURL();initJWT();initHeaders();initQR();initDeveloper();initLab();initPrivacy();
-  if('serviceWorker' in navigator && window.isSecureContext){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').then(reg=>{reg.addEventListener('updatefound',()=>toast('Update available — reload after the new version installs.'));}).catch(()=>toast('Offline mode unavailable in this browser.')));}
+  if('serviceWorker' in navigator && window.isSecureContext){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').then(reg=>{const hadController=Boolean(navigator.serviceWorker.controller);reg.addEventListener('updatefound',()=>{const worker=reg.installing;if(!hadController||!worker)return;worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)toast('Update available — reload after the new version installs.');});});}).catch(()=>toast('Offline mode unavailable in this browser.')));}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
