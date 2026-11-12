@@ -1,123 +1,312 @@
-const $=id=>document.getElementById(id);
-const enc=new TextEncoder(),dec=new TextDecoder();
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.i);toast.i=setTimeout(()=>t.classList.remove('on'),1800)}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function err(el,m){el.textContent='ข้อผิดพลาด: '+m}
-/* navigation */
-const tabs=[['home','หน้าแรก','⌂'],['pw','รหัสผ่าน','✳'],['aes','AES','⬡'],['hash','Hash','#'],['url','ลิงก์','⌁'],['jwt','JWT','◈'],['hdr','Headers','▤'],['qr','QR','▦'],['lab','Lab','⟡'],['dev','Dev','⌘']];
-tabs.forEach(([k,l,ico])=>{const b=document.createElement('button');b.innerHTML='<span class="nav-ico">'+ico+'</span><span>'+l+'</span>';b.dataset.go=k;b.setAttribute('aria-label',l);$('nav').appendChild(b)});
-function go(k){stopCam();note(k);document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===k));document.querySelectorAll('[data-go]').forEach(b=>{if(b.closest('nav'))b.classList.toggle('on',b.dataset.go===k)});scrollTo(0,0);try{history.replaceState(null,'','#'+k)}catch(e){}}
-document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go);const c=e.target.closest('[data-copy]');if(c){const t=$(c.dataset.copy).textContent;if(!t)return toast('ยังไม่มีข้อมูลให้คัดลอก');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>toast('คัดลอกแล้ว'),()=>toast('คัดลอกไม่สำเร็จ'));else{const area=document.createElement('textarea');area.value=t;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();const ok=document.execCommand('copy');area.remove();toast(ok?'คัดลอกแล้ว':'คัดลอกไม่สำเร็จ')}}});
-addEventListener('hashchange',()=>{const k=location.hash.slice(1);if(tabs.some(t=>t[0]===k))go(k)});
-try{const savedTheme=localStorage.getItem('ps.theme');if(savedTheme==='dark'||savedTheme==='light')document.documentElement.dataset.theme=savedTheme}catch(e){}
-$('theme').onclick=()=>{const r=document.documentElement;const current=r.dataset.theme||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');r.dataset.theme=current==='dark'?'light':'dark';try{localStorage.setItem('ps.theme',r.dataset.theme)}catch(e){}};
-/* random */
-function ri(n){const lim=Math.floor(4294967296/n)*n;const a=new Uint32Array(1);let x;do{crypto.getRandomValues(a);x=a[0]}while(x>=lim);return x%n}
-const WORDS="amber anchor arrow badge basil beacon birch bridge cable candle canyon castle cedar cipher cloud comet coral crest delta dune eagle ember falcon fern flint forest gale garnet glacier harbor hazel helm indigo iris jade jasmine kernel lagoon lantern lemon lotus maple marble meadow mint nectar nimbus oasis olive onyx orbit otter pearl pepper pine plume quartz quill raven reef ridge river saffron sage shadow silver sky slate spark spruce stone summit tango thistle thunder tulip umber valley velvet violet willow winter zephyr zinc".split(" ");
-function genPw(){const L=+$('pwLen').value;if($('cP').checked){const n=Math.min(10,Math.max(6,Math.round(L/3)));const w=[];for(let i=0;i<n;i++)w.push(WORDS[ri(WORDS.length)]);return{v:w.join(' '),bits:n*Math.log2(WORDS.length),words:n,list:WORDS.length}}
-const sets=[[$('cU'),'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],[$('cL'),'abcdefghijklmnopqrstuvwxyz'],[$('cN'),'0123456789'],[$('cS'),'!@#$%^&*()-_=+[]{};:,.?']].filter(s=>s[0].checked).map(s=>s[1]);
-if(!sets.length)return null;const all=sets.join('');const ch=sets.map(s=>s[ri(s.length)]);while(ch.length<L)ch.push(all[ri(all.length)]);for(let i=ch.length-1;i>0;i--){const j=ri(i+1);[ch[i],ch[j]]=[ch[j],ch[i]]}return{v:ch.join(''),bits:L*Math.log2(all.length)}}
-function level(b){return b<40?['อ่อนมาก','var(--er)',20]:b<60?['พอใช้','var(--wn)',45]:b<80?['ดี','var(--cyan)',70]:['แข็งแรง','var(--ok)',100]}
-function strengthText(r){return r.th+' / '+r.en}
-function showPw(){const g=genPw();if(!g){$('pwOut').textContent='เลือกชุดอักขระอย่างน้อยหนึ่งชุด';return}$('pwOut').textContent=g.v;
-if(g.words){const l=level(g.bits);$('pwBar').style.width=l[2]+'%';$('pwBar').style.background=l[1];$('pwInfo').textContent=`Passphrase ${g.words} คำ สุ่มจากรายการ ${g.list} คำ (ทฤษฎี ≈ ${Math.round(g.bits)} บิต) — รายการคำยังเล็ก ควรเพิ่มคำหรือใช้รหัสสุ่ม / Small wordlist: add words or use a random password`;return}
-const r=PSStrength.assess(g.v),w=[20,40,60,80,100][r.score];$('pwBar').style.width=w+'%';$('pwBar').style.background=['var(--er)','var(--er)','var(--wn)','var(--cyan)','var(--ok)'][r.score];$('pwInfo').textContent=strengthText(r)}
-$('pwGen').onclick=showPw;$('pwLen').oninput=()=>{$('pwLenV').textContent=$('pwLen').value;showPw()};['cU','cL','cN','cS','cP'].forEach(i=>$(i).onchange=showPw);showPw();
-const COMMON=['password','123456','12345678','qwerty','111111','abc123','letmein','iloveyou','admin','welcome','monkey','dragon','passw0rd','1q2w3e','000000'];
-$('pwChk').oninput=()=>{const p=$('pwChk').value,o=$('pwChkOut');if(!p){o.textContent='';return}const r=PSStrength.assess(p);o.textContent='';const b=document.createElement('b');b.textContent=strengthText(r);o.appendChild(b);if(r.tips.length){const ul=document.createElement('ul');ul.className='r';r.tips.forEach(t=>{const li=document.createElement('li');li.textContent=t.th+' / '+t.en;ul.appendChild(li)});o.appendChild(ul)}};
-/* AES */
-const b64=u=>{let s='';u.forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
-const unb64=s=>Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0));
-const ITER=600000,MAGIC=[0x4f,0x50,0x53,0x31];
-async function key(pw,salt,it){const k=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:it,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
-async function seal(pw,data){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const k=await key(pw,salt,ITER);const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,data));const h=new Uint8Array(5+4+16+12);h.set(MAGIC);h[4]=1;new DataView(h.buffer).setUint32(5,ITER);h.set(salt,9);h.set(iv,25);const o=new Uint8Array(h.length+ct.length);o.set(h);o.set(ct,h.length);return o}
-async function open(pw,u){if(u.length<53||MAGIC.some((m,i)=>u[i]!==m)||u[4]!==1)throw new Error('รูปแบบข้อมูลไม่ถูกต้องหรือเวอร์ชันไม่รองรับ');const it=new DataView(u.buffer,u.byteOffset).getUint32(5);if(it<100000||it>1000000)throw new Error('ข้อมูลส่วนหัวผิดปกติหรือใช้จำนวนรอบสูงเกินขีดจำกัดที่แอปรองรับ');const k=await key(pw,u.slice(9,25),it);try{return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(25,37)},k,u.slice(37)))}catch(e){throw new Error('รหัสผ่านไม่ถูกต้องหรือข้อมูลถูกแก้ไข')}}
-function dl(name,bytes,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:type||'application/octet-stream'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('ดาวน์โหลดแล้ว')}
-async function busy(btn,fn){const t=btn.textContent;btn.disabled=true;btn.textContent='กำลังทำงาน...';try{await fn()}catch(e){toast(e.message||'เกิดข้อผิดพลาด')}finally{btn.disabled=false;btn.textContent=t}}
-$('aEnc').onclick=e=>busy(e.target,async()=>{const pw=$('aPw').value,t=$('aTx').value;if(!pw)throw new Error('กรอกรหัสผ่านก่อน');if(!t)throw new Error('กรอกข้อความก่อน');$('aOut').textContent=b64(await seal(pw,enc.encode(t)));toast('เข้ารหัสแล้ว')});
-$('aDec').onclick=e=>busy(e.target,async()=>{const pw=$('aPw').value,t=$('aTx').value.trim();if(!pw||!t)throw new Error('กรอกรหัสผ่านและข้อความเข้ารหัส');let u;try{u=unb64(t)}catch(x){throw new Error('ข้อความไม่ใช่ Base64 ที่ถูกต้อง')}$('aOut').textContent=dec.decode(await open(pw,u));toast('ถอดรหัสแล้ว')});
-function getFile(){const f=$('aFile').files[0];if(!f)throw new Error('เลือกไฟล์ก่อน');if(!$('aPw').value)throw new Error('กรอกรหัสผ่านก่อน');if(f.size>50*1048576+64)throw new Error('ไฟล์ใหญ่เกิน 50 MB เพื่อป้องกันหน่วยความจำมือถือไม่เพียงพอ');return f}
-$('aFEnc').onclick=e=>busy(e.target,async()=>{const f=getFile();dl(f.name+'.obx',await seal($('aPw').value,new Uint8Array(await f.arrayBuffer())))});
-$('aFDec').onclick=e=>busy(e.target,async()=>{const f=getFile();const out=await open($('aPw').value,new Uint8Array(await f.arrayBuffer()));dl(f.name.replace(/\.obx$/,'')||'decrypted.bin',out)});
-/* Hash */
-const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
-$('hGo').onclick=e=>busy(e.target,async()=>{const f=$('hFile').files[0];if(!f&&!$('hTx').value)throw new Error('ใส่ข้อความหรือเลือกไฟล์');const d=f?await f.arrayBuffer():enc.encode($('hTx').value);$('hOut').textContent=hex(await crypto.subtle.digest($('hAlg').value,d));cmp()});
-function cmp(){const a=$('hOut').textContent.trim().toLowerCase(),b=$('hCmp').value.trim().toLowerCase();const o=$('hCmpOut');if(!a||!b){o.textContent='';return}o.innerHTML=a===b?'<span class="pill good">ตรงกัน</span>':'<span class="pill bad">ไม่ตรงกัน</span>'}
-$('hCmp').oninput=cmp;$('hDl').onclick=()=>{const t=$('hOut').textContent;if(!t)return toast('ยังไม่มีผลลัพธ์');dl('hash.txt',enc.encode($('hAlg').value+': '+t+'\n'),'text/plain')};
-/* URL */
-function riskLabel(l){return{LOW:'ความเสี่ยงต่ำ',MEDIUM:'ความเสี่ยงปานกลาง',HIGH:'ความเสี่ยงสูง'}[l]}
-$('uGo').onclick=()=>{const o=$('uOut');try{const result=window.PSCore.inspect($('uIn').value);const lv=result.level;const schemeNote=result.schemeAssumed?'<p class="sub">ไม่ได้ระบุโปรโตคอล ระบบจึงสมมติ HTTPS เพื่อใช้วิเคราะห์เท่านั้น</p>':'';o.innerHTML=`<div class="card"><div class="card-cap"><span>RISK ASSESSMENT</span><span class="pill ${lv}">${riskLabel(lv)}</span></div><div class="sub">โดเมน: <b>${esc(result.hostname||'ไม่พบ')}</b></div><div class="sub">คะแนนสัญญาณความเสี่ยง: <b>${result.score}</b></div>${schemeNote}`+(result.signals.length?'<ul class="r">'+result.signals.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<p class="sub">ไม่พบสัญญาณเสี่ยงจากกฎพื้นฐานที่เครื่องมือนี้ตรวจสอบ</p>')+'<p class="note">ผลนี้เป็นการประเมินจากรูปแบบ URL เท่านั้น ไม่ได้ตรวจเนื้อหาเว็บ ปลายทางจริง หรือฐานข้อมูลภัยคุกคาม และไม่รับรองว่าเว็บไซต์ปลอดภัย</p></div>'}catch(e){o.innerHTML='<p class="note">'+esc(e.message||'URL ไม่ถูกต้อง')+'</p>'}};
-/* JWT */
-function b64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return dec.decode(unb64(s))}
-$('jGo').onclick=()=>{const o=$('jOut'),t=$('jIn').value.trim().replace(/^Bearer\s+/i,'');const p=t.split('.');if(p.length!==3){o.innerHTML='<p class="note">โครงสร้างไม่ถูกต้อง JWT ต้องมี 3 ส่วนคั่นด้วยจุด</p>';return}
-try{const H=JSON.parse(b64u(p[0])),P=JSON.parse(b64u(p[1]));const now=Date.now()/1000;const d=v=>typeof v==='number'?new Date(v*1000).toLocaleString('th-TH'):null;let st='';if(typeof P.exp==='number'){st=P.exp<now?'<span class="pill bad">หมดอายุแล้ว</span>':'<span class="pill good">ยังไม่หมดอายุตามเวลาเครื่อง</span>'}else st='<span class="pill mid">ไม่มี exp</span>';
-const times=['iat','nbf','exp'].filter(k=>typeof P[k]==='number').map(k=>`<li>${k}: ${esc(d(P[k]))}</li>`).join('');
-o.innerHTML=`<p>${st}${H.alg==='none'?' <span class="pill bad">alg: none</span>':''}</p>${times?'<ul class="r">'+times+'</ul>':''}<label>Header</label><div class="out">${esc(JSON.stringify(H,null,2))}</div><label>Payload</label><div class="out">${esc(JSON.stringify(P,null,2))}</div><p class="note">ลายเซ็นยังไม่ได้รับการตรวจสอบ</p>`}catch(e){o.innerHTML='<p class="note">ถอดรหัสไม่ได้: Header หรือ Payload ไม่ใช่ JSON ที่ถูกต้อง</p>'}};
-/* Headers */
-$('xGo').onclick=()=>{const txt=$('xIn').value;const o=$('xOut');if(!txt.trim()){o.innerHTML='<p class="note">วาง Headers ก่อน</p>';return}const H={},C=[];txt.split(/\r?\n/).forEach(l=>{const i=l.indexOf(':');if(i<1)return;const k=l.slice(0,i).trim().toLowerCase(),v=l.slice(i+1).trim();if(k==='set-cookie')C.push(v);else H[k]=v});
-const res=[];const chk=(k,name,ok,fix,warn)=>{const v=H[k];res.push(!v?['bad',name,'ยังไม่ได้ตั้งค่า',fix]:warn&&warn(v)?['mid',name,warn(v),fix]:['good',name,'ตั้งค่าแล้ว','']) };
-chk('content-security-policy','Content-Security-Policy',0,"Content-Security-Policy: default-src 'self'; object-src 'none'; frame-ancestors 'none'",v=>/unsafe-inline|unsafe-eval|\*\s|default-src\s+\*/.test(v)?'มีค่าที่ผ่อนปรน (unsafe-inline, unsafe-eval หรือ *)':'');
-chk('strict-transport-security','Strict-Transport-Security',0,'Strict-Transport-Security: max-age=31536000; includeSubDomains',v=>{const m=/max-age=(\d+)/i.exec(v);return!m||+m[1]<15552000?'max-age สั้นกว่า 180 วัน':''});
-chk('x-content-type-options','X-Content-Type-Options',0,'X-Content-Type-Options: nosniff',v=>/nosniff/i.test(v)?'':'ค่าควรเป็น nosniff');
-chk('x-frame-options','X-Frame-Options',0,'X-Frame-Options: DENY (หรือใช้ frame-ancestors ใน CSP)',v=>/deny|sameorigin/i.test(v)?'':'ค่าควรเป็น DENY หรือ SAMEORIGIN');
-chk('referrer-policy','Referrer-Policy',0,'Referrer-Policy: strict-origin-when-cross-origin',v=>/unsafe-url|no-referrer-when-downgrade/i.test(v)?'ค่านี้ส่ง URL เต็มออกไปมากเกินไป':'');
-chk('permissions-policy','Permissions-Policy',0,'Permissions-Policy: camera=(self), microphone=(), geolocation=()',v=>/camera=\s*\(\s*\)/i.test(v)?'ปิดกล้องทั้งหมด ซึ่งจะทำให้ QR Scanner ใช้งานไม่ได้':'');
-let html=res.map(x=>`<div class="card"><span class="pill ${x[0]}">${x[0]==='good'?'ผ่าน':x[0]==='mid'?'ควรปรับ':'ขาด'}</span> <b>${x[1]}</b><div class="sub" style="margin:4px 0 0">${esc(x[2])}</div>${x[3]?'<div class="out">'+esc(x[3])+'</div>':''}</div>`).join('');
-if(C.length)html+=C.map(c=>{const miss=[];if(!/;\s*secure/i.test(c))miss.push('Secure');if(!/;\s*httponly/i.test(c))miss.push('HttpOnly');if(!/;\s*samesite=(lax|strict|none)/i.test(c))miss.push('SameSite');return `<div class="card"><span class="pill ${miss.length?'mid':'good'}">${miss.length?'ควรปรับ':'ผ่าน'}</span> <b>Cookie: ${esc(c.split('=')[0])}</b><div class="sub" style="margin:4px 0 0">${miss.length?'ขาด: '+miss.join(', '):'มี Secure, HttpOnly และ SameSite'}</div></div>`}).join('');else html+='<p class="sub">ไม่พบ Set-Cookie ในข้อมูลที่วาง</p>';
-o.innerHTML=html};
-/* Dev */
-const dev={b64e:s=>b64(enc.encode(s)),b64d:s=>dec.decode(unb64(s)),ue:encodeURIComponent,ud:decodeURIComponent,he:esc,hd:s=>{const t=document.createElement('textarea');t.innerHTML=s;return t.value},js:s=>JSON.stringify(JSON.parse(s),null,2),
-ts:s=>{s=s.trim();if(!s)return new Date().toISOString()+'\nunix: '+Math.floor(Date.now()/1000);if(/^-?\d+$/.test(s)){const n=+s,d=new Date(Math.abs(n)>1e11?n:n*1000);if(isNaN(d))throw new Error('เวลาไม่ถูกต้อง');return d.toISOString()+'\nท้องถิ่น: '+d.toLocaleString('th-TH')}const d=new Date(s);if(isNaN(d))throw new Error('รูปแบบวันที่ไม่ถูกต้อง');return 'unix: '+Math.floor(d/1000)+'\nISO: '+d.toISOString()},
-col:s=>{s=s.trim();let r,g,b;const m=/^#?([0-9a-f]{6})$/i.exec(s);if(m){const n=parseInt(m[1],16);r=n>>16;g=n>>8&255;b=n&255}else{const p=s.split(/[\s,]+/).map(Number);if(p.length!==3||p.some(x=>!(x>=0&&x<=255)))throw new Error('ใส่ #RRGGBB หรือ R,G,B (0-255)');[r,g,b]=p}const mx=Math.max(r,g,b)/255,mn=Math.min(r,g,b)/255,l=(mx+mn)/2,d=mx-mn;let h=0,sa=0;if(d){sa=d/(1-Math.abs(2*l-1));const R=r/255,G=g/255,B=b/255;h=mx===R?((G-B)/d)%6:mx===G?(B-R)/d+2:(R-G)/d+4;h=Math.round((h*60+360)%360)}return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('')+`\nrgb(${r}, ${g}, ${b})\nhsl(${h}, ${Math.round(sa*100)}%, ${Math.round(l*100)}%)`},diff:()=>{const a=$('dIn').value.split('\n'),b=$('dIn2').value.split('\n'),o=[];for(let i=0;i<Math.max(a.length,b.length);i++){if(a[i]===b[i])o.push('  '+a[i]);else{if(a[i]!==undefined)o.push('- '+a[i]);if(b[i]!==undefined)o.push('+ '+b[i])}}return o.join('\n')},uuid:()=>crypto.randomUUID(),tok:()=>b64(crypto.getRandomValues(new Uint8Array(32))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')};
-document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{try{$('dOut').textContent=dev[b.dataset.d]($('dIn').value)}catch(e){err($('dOut'),e.message||'แปลงไม่ได้')}});
-$('xsI').value='<img src=x onerror=alert(1)>';
-$('sqGo').onclick=()=>{const u=$('sqU').value,p=$('sqP').value,safe=$('sqSafe').checked,o=$('sqOut');
-let q,ok;if(safe){q="SELECT * FROM users WHERE name = ? AND pass = ?\nparams: ["+JSON.stringify(u)+", "+JSON.stringify(p)+"]";ok=u==='admin'&&p==='S3cret!'}
-else{q="SELECT * FROM users WHERE name = '"+u+"' AND pass = '"+p+"'";ok=(u==='admin'&&p==='S3cret!')||/'\s*(--|#)/.test(u)||/'\s*or\s+'?(\w+)'?\s*=\s*'?\1/i.test(u+p)}
-const inj=!safe&&ok&&!(u==='admin'&&p==='S3cret!');
-o.innerHTML='<div class="out">'+esc(q)+'</div><p><span class="pill '+(ok?'bad':'good')+'">'+(inj?'ถูกเจาะ: เข้าสู่ระบบโดยไม่รู้รหัสผ่าน':ok?'ล็อกอินสำเร็จ (ข้อมูลถูกต้อง)':'ล็อกอินไม่สำเร็จ')+'</span></p><p class="sub">'+(inj?'ข้อมูลที่ผู้ใช้ใส่ถูกต่อเข้าไปในคำสั่ง SQL จึงเปลี่ยนความหมายของคำสั่ง เครื่องหมาย -- ทำให้เงื่อนไขรหัสผ่านถูกตัดทิ้ง วิธีป้องกัน: ใช้ Parameterized Query เสมอ ตรวจสอบ Input และให้สิทธิ์ฐานข้อมูลน้อยที่สุด':'ในโหมดปลอดภัย ข้อมูลถูกส่งแยกจากคำสั่ง จึงถูกมองเป็นค่าธรรมดา ไม่เปลี่ยนโครงสร้างคำสั่ง')+'</p>'};
-$('xsGo').onclick=()=>{const v=$('xsI').value,safe=$('xsSafe').checked,o=$('xsOut');const html=safe?esc(v):v;const risky=!safe&&(/<\s*script/i.test(v)||/<[^>]+\son\w+\s*=/i.test(v)||/javascript:/i.test(v));
-o.innerHTML='<label>HTML ที่หน้าเว็บจะได้รับ</label><div class="out">'+esc(html)+'</div><p><span class="pill '+(risky?'bad':'good')+'">'+(risky?'โค้ดนี้จะถูกรันในเบราว์เซอร์ผู้ใช้':'ปลอดภัย: แสดงเป็นข้อความธรรมดา')+'</span></p><p class="sub">'+(risky?'แอปนำข้อมูลของผู้ใช้ไปใส่ในหน้าเว็บโดยไม่เข้ารหัส เบราว์เซอร์จึงตีความเป็นโค้ด ผู้โจมตีอาจขโมย Session หรือแก้หน้าเว็บ วิธีป้องกัน: Output Encoding, ใช้ textContent แทน innerHTML และตั้ง Content-Security-Policy':'อักขระพิเศษถูกแปลงเป็น Entity เบราว์เซอร์จึงไม่ตีความเป็นโค้ด')+'</p>'};
-/* Dashboard experience: favorites, search, recent activity, language toggle, QR scanner */
-const S={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const TT={home:['Your security suite','Private tools for everyday protection'],pw:['Password generator','Cryptographically secure random + passphrase'],aes:['AES-256 encryption','Encrypt text and files on this device'],hash:['Hash & integrity','SHA-256 / 384 / 512'],url:['Link risk checker','Analyze suspicious URL patterns locally'],jwt:['JWT Inspector','Decode Header and Payload, not verify'],hdr:['Security headers','Analyze HTTP response headers'],dev:['Developer tools','Base64 / URL / UUID / JSON / time'],lab:['Safe Cyber Lab','SQLi / XSS / Cookie / Input simulations'],qr:['QR tools','Generate and scan QR codes locally']};
-const NV={home:'Home',pw:'Password',aes:'AES',hash:'Hash',url:'Links',jwt:'JWT',hdr:'Headers',dev:'Dev',lab:'Lab',qr:'QR'};
-let lang=S.get('ps.lang','th');
-document.querySelectorAll('#nav button').forEach(b=>{const span=b.querySelector('span:last-child');b.dataset.th=span?span.textContent:b.textContent});
-document.querySelectorAll('section').forEach(sec=>{const h=sec.querySelector('h2');if(h)h.dataset.th=h.textContent});
-$('hS').dataset.th=$('hS').textContent;
-document.querySelectorAll('.tile').forEach(tile=>{const key=tile.dataset.go,copy=tile.querySelector('.tile-copy');tile.dataset.titleTh=copy.querySelector('b').textContent;tile.dataset.descTh=copy.querySelector('.desc').textContent;const wrap=document.createElement('div');wrap.className='tw';wrap.dataset.g=key;tile.parentNode.insertBefore(wrap,tile);wrap.appendChild(tile);const star=document.createElement('button');star.className='star';star.dataset.star=key;star.type='button';star.setAttribute('aria-label','Favorite '+key);wrap.appendChild(star)});
-function nm(k){const nav=document.querySelector('#nav [data-go="'+k+'"]');return lang==='en'?(TT[k]?TT[k][0]:NV[k]):(nav&&nav.dataset.th)||k}
-function note(k){if(S.get('ps.recoff',false)||!NV[k]||k==='home')return;const saved=S.get('ps.recent',[]),recent=(Array.isArray(saved)?saved:[]).filter(x=>x!==k);recent.unshift(k);S.set('ps.recent',recent.slice(0,5));render()}
-function render(){const en=lang==='en',savedFav=S.get('ps.fav',[]),fav=Array.isArray(savedFav)?savedFav:[],grid=document.querySelector('#home .grid');
-[...grid.children].sort((a,b)=>fav.includes(b.dataset.g)-fav.includes(a.dataset.g)).forEach(x=>grid.appendChild(x));
-grid.querySelectorAll('.tw').forEach(w=>{const key=w.dataset.g,btn=w.querySelector('.tile'),copy=btn.querySelector('.tile-copy'),title=copy.querySelector('b'),desc=copy.querySelector('.desc');if(en&&TT[key]){title.textContent=TT[key][0];desc.textContent=TT[key][1]}else{title.textContent=btn.dataset.titleTh||title.textContent;desc.textContent=btn.dataset.descTh||desc.textContent}w.querySelector('.star').textContent=fav.includes(key)?'★':'☆'});
-document.querySelectorAll('#nav button').forEach(btn=>{const label=btn.querySelector('span:last-child');if(label)label.textContent=en?NV[btn.dataset.go]:(btn.dataset.th||label.textContent)});
-document.querySelectorAll('section').forEach(sec=>{const h=sec.querySelector('h2');if(h&&sec.id!=='home')h.textContent=en&&TT[sec.id]?TT[sec.id][0]:(h.dataset.th||h.textContent)});
-$('hT').textContent=en?'Your security suite':'เครื่องมือของคุณ';$('hS').textContent=en?'Choose a tool. Everything runs on your device.':$('hS').dataset.th;$('srch').placeholder=en?'Search tools...':'ค้นหาเครื่องมือ...';
-const off=S.get('ps.recoff',false),savedRecent=S.get('ps.recent',[]),recent=(Array.isArray(savedRecent)?savedRecent:[]).filter(key=>NV[key]);
-$('recent').innerHTML='<label class="chk"><input type="checkbox" id="recOn" '+(off?'':'checked')+'>'+(en?'Keep recent activity (this device only)':'บันทึกการใช้งานล่าสุด (เฉพาะในเครื่อง)')+'</label>'+(!off&&recent.length?'<div class="row">'+recent.map(key=>'<button data-go="'+key+'">'+esc(nm(key))+'</button>').join('')+'<button id="recClr">'+(en?'Clear':'ล้าง')+'</button></div>':'')+'<div class="row"><button data-go="priv">'+(en?'Privacy & limits':'ความเป็นส่วนตัวและข้อจำกัด')+'</button></div>';
-$('lang').textContent=en?'ไทย':'EN';document.documentElement.lang=lang}
-document.addEventListener('click',e=>{const s=e.target.closest('[data-star]');if(s){const saved=S.get('ps.fav',[]),f=Array.isArray(saved)?saved:[],k=s.dataset.star;S.set('ps.fav',f.includes(k)?f.filter(x=>x!==k):[...f,k]);render()}if(e.target.id==='recClr'){S.set('ps.recent',[]);render()}});
-document.addEventListener('change',e=>{if(e.target.id==='recOn'){S.set('ps.recoff',!e.target.checked);if(!e.target.checked)S.set('ps.recent',[]);render()}});
-$('lang').onclick=()=>{lang=lang==='en'?'th':'en';S.set('ps.lang',lang);render()};
-$('srch').oninput=()=>{const q=$('srch').value.trim().toLowerCase();document.querySelectorAll('#home .tw').forEach(w=>w.hidden=!!q&&!w.textContent.toLowerCase().includes(q)&&!(TT[w.dataset.g]||[]).join(' ').toLowerCase().includes(q))};
-let stream=null,raf=0;
-function stopCam(){cancelAnimationFrame(raf);if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}const v=$('qV');if(v){try{v.pause()}catch(e){}v.srcObject=null;v.style.display='none'}}
-function qrDone(value){stopCam();const v=String(value||'');if(/^[a-z][a-z0-9+.-]*:\/\//i.test(v)||/^(www\.)?[\w-]+(\.[\w-]+)+(\/|$)/i.test(v)){$('uIn').value=v;go('url');$('uGo').click();toast('อ่าน QR แล้ว — ตรวจสอบลิงก์ก่อนเปิด')}else{$('qMsg').textContent='QR นี้เป็นข้อความ ไม่ใช่ URL: '+v.slice(0,300)}}
-async function detector(){if(!('BarcodeDetector' in window))throw new Error('เบราว์เซอร์นี้ยังไม่รองรับ BarcodeDetector สำหรับการอ่าน QR ลองใช้ Chrome บน Android หรือวาง URL ในหน้าตรวจลิงก์');return new BarcodeDetector({formats:['qr_code']})}
-let generatedQRCanvas=null;
-$('qrText').addEventListener('input',()=>{$('qrSave').disabled=true;generatedQRCanvas=null});
-$('qrCreate').onclick=()=>{const message=$('qrGenMsg');message.textContent='';try{const result=window.PSQR.generate($('qrText').value);const quiet=4,scale=8,side=(result.size+quiet*2)*scale;const canvas=document.createElement('canvas');canvas.width=side;canvas.height=side;canvas.className='qr-preview';canvas.setAttribute('aria-label','Generated QR Code');const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas ไม่พร้อมใช้งาน');ctx.imageSmoothingEnabled=false;ctx.fillStyle='#ffffff';ctx.fillRect(0,0,side,side);ctx.fillStyle='#101827';for(let y=0;y<result.size;y++)for(let x=0;x<result.size;x++)if(result.modules[y][x])ctx.fillRect((x+quiet)*scale,(y+quiet)*scale,scale,scale);$('qrGenerated').replaceChildren(canvas);generatedQRCanvas=canvas;$('qrSave').disabled=false;message.textContent=`สร้างสำเร็จ · QR Version ${result.version} · ${new TextEncoder().encode($('qrText').value).length} ไบต์ UTF-8 · ประมวลผลในเครื่อง`;toast('สร้าง QR Code แล้ว')}catch(e){$('qrGenerated').replaceChildren();generatedQRCanvas=null;$('qrSave').disabled=true;message.textContent=e.message||'สร้าง QR ไม่สำเร็จ'}};
-$('qrSave').onclick=()=>{if(!generatedQRCanvas)return toast('สร้าง QR ก่อนดาวน์โหลด');generatedQRCanvas.toBlob(async blob=>{if(!blob)return toast('สร้างไฟล์ PNG ไม่สำเร็จ');dl('obix-pocketshield-qr.png',new Uint8Array(await blob.arrayBuffer()),'image/png')},'image/png')};
-$('qUploadBtn').addEventListener('click',()=>$('qFile').click());
-$('qCam').onclick=async()=>{const m=$('qMsg');m.textContent='';if(!window.isSecureContext){m.textContent='กล้องต้องใช้งานผ่าน HTTPS หรือ localhost';return}if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){m.textContent='เบราว์เซอร์นี้ไม่อนุญาตให้เข้าถึงกล้อง';return}try{const d=await detector();stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});const v=$('qV');v.srcObject=stream;v.style.display='block';await v.play();const loop=async()=>{if(!stream)return;try{const results=await d.detect(v);if(results.length){qrDone(results[0].rawValue);return}}catch(e){/* keep scanning; transient frame errors are recoverable */}raf=requestAnimationFrame(loop)};loop()}catch(e){stopCam();m.textContent=e.name==='NotAllowedError'?'คุณปฏิเสธสิทธิ์กล้อง โปรดอนุญาตกล้องให้เว็บไซต์นี้ แล้วลองอีกครั้ง':e.name==='NotFoundError'?'ไม่พบกล้องในอุปกรณ์':(e.message||'เปิดกล้องไม่ได้')}};
-$('qStop').onclick=stopCam;
-$('qFile').onchange=async e=>{const f=e.target.files&&e.target.files[0],m=$('qMsg');m.textContent='';if(!f)return;try{if(!f.type.startsWith('image/'))throw new Error('กรุณาเลือกไฟล์ภาพ');if(!('createImageBitmap' in window))throw new Error('เบราว์เซอร์นี้ไม่รองรับการอ่านไฟล์ภาพ QR');const d=await detector(),bitmap=await createImageBitmap(f);try{const results=await d.detect(bitmap);if(!results.length)throw new Error('ไม่พบ QR Code ในภาพ');qrDone(results[0].rawValue)}finally{bitmap.close()}}catch(e){m.textContent=e.message||'อ่านภาพไม่ได้'}e.target.value=''};
-window.addEventListener('pagehide',stopCam);
-$('ivGo').onclick=()=>{const value=$('ivInput').value,valid=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)&&value.length<=254;$('ivOut').innerHTML='<p><span class="pill '+(valid?'good':'bad')+'">'+(valid?'ผ่านตัวอย่าง Allowlist':'ไม่ผ่านการตรวจสอบ')+'</span></p><p class="sub">'+(valid?'รูปแบบอีเมลผ่านการตรวจสอบเบื้องต้น':'ตรวจรูปแบบอีเมลและความยาวไม่เกิน 254 ตัวอักษรแล้ว')+'. ตัวอย่างนี้เป็นการจำลอง ไม่ได้ส่งข้อมูลไปที่ Server</p>'};
-$('cookieGo').onclick=()=>{const value=$('cookieInput').value,checks=[['Secure',/;\s*secure(?:;|$)/i.test(value)],['HttpOnly',/;\s*httponly(?:;|$)/i.test(value)],['SameSite',/;\s*samesite=(strict|lax|none)(?:;|$)/i.test(value)]];$('cookieOut').innerHTML=checks.map(([name,ok])=>'<p><span class="pill '+(ok?'good':'bad')+'">'+(ok?'พบ':'ขาด')+'</span> <b>'+name+'</b></p>').join('')+'<p class="note">SameSite=None ควรใช้คู่กับ Secure และควรกำหนด Path/อายุ Cookie ตามความเหมาะสม</p>'};
-$('clearLocal').onclick=()=>{if(!confirm('ล้างธีม ภาษา รายการโปรด และประวัติที่บันทึกในอุปกรณ์นี้หรือไม่?'))return;['ps.lang','ps.fav','ps.recent','ps.recoff','ps.theme'].forEach(key=>localStorage.removeItem(key));location.reload()};
-render();
-if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').then(r=>r.addEventListener('updatefound',()=>toast('มีเวอร์ชันใหม่ รีโหลดเพื่ออัปเดต'))).catch(()=>{}));
-const k0=location.hash.slice(1);if(tabs.some(t=>t[0]===k0))go(k0);else go('home');
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const C = window.PocketShieldCore;
+const enc = new TextEncoder();
+const dec = new TextDecoder('utf-8', { fatal: true });
+const MAX_FILE_BYTES = 15 * 1024 * 1024;
+const NAV = [
+  ['home','HOME','⌂','หน้าแรก'],['pw','PASSWORD','⌘','รหัสผ่าน'],['aes','AES','⬡','เข้ารหัส'],['hash','HASH','#','แฮช'],['url','URL','⌁','ตรวจลิงก์'],
+  ['jwt','JWT','◈','โทเคน'],['hdr','HEADERS','▤','ส่วนหัวเว็บ'],['qr','QR','▦','สแกน QR'],['lab','CYBER LAB','⚑','ห้องทดลอง'],['dev','DEV TOOLS','</>','เครื่องมือ Dev']
+];
+const TOOL_META = {
+  pw:['PASSWORD LAB','สร้างรหัสผ่านและ Passphrase'],aes:['AES ENCRYPTION','เข้ารหัสข้อความและไฟล์'],hash:['HASH ENGINE','ตรวจสอบ SHA-256 / 384 / 512'],
+  url:['URL INSPECTOR','วิเคราะห์ลิงก์น่าสงสัย'],jwt:['JWT INSPECTOR','ถอดรหัส Header และ Payload'],hdr:['HEADER AUDIT','ตรวจสอบ HTTP Security Headers'],
+  qr:['QR SCANNER','สแกน QR ภายในอุปกรณ์'],lab:['SAFE CYBER LAB','ห้องทดลอง Cybersecurity แบบจำลอง'],dev:['DEV TOOLBOX','เครื่องมือแปลงข้อมูลสำหรับนักพัฒนา']
+};
+const Storage = {
+  get(key, fallback) { try { const value = JSON.parse(localStorage.getItem(key)); return value == null ? fallback : value; } catch (_) { return fallback; } },
+  set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { toast('ไม่สามารถบันทึกการตั้งค่าในอุปกรณ์นี้ได้'); } },
+  remove(key) { try { localStorage.removeItem(key); } catch (_) {} }
+};
+let currentLanguage = Storage.get('ps.lang','th') === 'en' ? 'en' : 'th';
+let cameraStream = null;
+let scanFrame = 0;
+let recent = Array.isArray(Storage.get('ps.recent',[])) ? Storage.get('ps.recent',[]) : [];
+let favorites = Array.isArray(Storage.get('ps.fav',[])) ? Storage.get('ps.fav',[]) : [];
+
+function toast(message) {
+  const node = $('toast'); if (!node) return;
+  node.textContent = message; node.classList.add('on');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => node.classList.remove('on'), 2200);
+}
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = String(text);
+  return node;
+}
+function resultCard(target, title, lines, tone='good') {
+  const root = $(target); if (!root) return;
+  const card = element('div','result-card');
+  const heading = element('h3','',title); card.appendChild(heading);
+  const list = element('ul');
+  for (const line of lines) list.appendChild(element('li','',line));
+  card.appendChild(list); root.replaceChildren(card);
+  card.dataset.tone = tone;
+}
+function setOutput(target, value) { const node = $(target); if (node) node.textContent = value == null ? '' : String(value); }
+function showError(target, message) {
+  const node = $(target); if (!node) return;
+  node.textContent = message || 'เกิดข้อผิดพลาด'; node.classList.add('error-text');
+}
+function copyText(text) {
+  if (!text) { toast('ไม่มีข้อมูลให้คัดลอก'); return; }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast('คัดลอกแล้ว'), () => fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  const area = document.createElement('textarea'); area.value = text;
+  area.style.position = 'fixed'; area.style.opacity = '0'; area.style.pointerEvents = 'none';
+  document.body.appendChild(area); area.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+  area.remove(); toast(ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ');
+}
+function downloadFile(name, data, mime='application/octet-stream') {
+  const blob = data instanceof Blob ? data : new Blob([data], {type:mime});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500); toast('เตรียมไฟล์ดาวน์โหลดแล้ว');
+}
+async function withBusy(button, action) {
+  if (!button || button.disabled) return;
+  const original = button.textContent; button.disabled = true; button.textContent = 'PROCESSING...';
+  try { await action(); } catch (error) { toast(error && error.message ? error.message : 'เกิดข้อผิดพลาด'); }
+  finally { button.disabled = false; button.textContent = original; }
+}
+function stopCamera() {
+  if (scanFrame) cancelAnimationFrame(scanFrame); scanFrame = 0;
+  if (cameraStream) { for (const track of cameraStream.getTracks()) track.stop(); cameraStream = null; }
+  const video = $('qV'); if (video) { try { video.pause(); } catch (_) {} video.srcObject = null; video.style.display = 'none'; }
+}
+function saveRecent(id) {
+  if (Storage.get('ps.recoff',false) || id === 'home' || !TOOL_META[id]) return;
+  recent = [id, ...recent.filter(item => item !== id)].slice(0,5);
+  Storage.set('ps.recent',recent); renderRecent();
+}
+function go(id) {
+  const target = $(id); if (!target) return;
+  if (id !== 'qr') stopCamera();
+  document.querySelectorAll('main section').forEach(section => section.classList.toggle('on',section.id===id));
+  document.querySelectorAll('#nav button').forEach(button => button.classList.toggle('on',button.dataset.go===id));
+  saveRecent(id);
+  try { history.replaceState(null,'','#'+id); } catch (_) {}
+  window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}
+function renderNavigation() {
+  const nav = $('nav'); nav.replaceChildren();
+  NAV.forEach(([id,label,icon]) => {
+    const button = element('button'); button.type = 'button'; button.dataset.go = id; button.setAttribute('aria-label',label);
+    button.append(element('span','nav-ico',icon),element('span','nav-label',currentLanguage==='th'?NAV.find(item=>item[0]===id)[3]:label)); nav.appendChild(button);
+  });
+}
+function renderRecent() {
+  const panel = $('recent'); if (!panel) return;
+  panel.replaceChildren();
+  const label = element('label',''); const checkbox = element('input'); checkbox.type = 'checkbox'; checkbox.checked = !Storage.get('ps.recoff',false); checkbox.id = 'recentToggle';
+  label.append(checkbox,document.createTextNode(currentLanguage==='en'?' KEEP RECENT MODULES ON THIS DEVICE':' บันทึกโมดูลล่าสุดในอุปกรณ์นี้'));
+  panel.appendChild(label);
+  if (!Storage.get('ps.recoff',false) && recent.length) {
+    const row = element('div','row');
+    recent.filter(id => TOOL_META[id]).forEach(id => { const button=element('button','',currentLanguage==='th'?TOOL_META[id][1]:TOOL_META[id][0]); button.type='button'; button.dataset.go=id; row.appendChild(button); });
+    const clear = element('button','',currentLanguage==='th'?'ล้าง':'CLEAR'); clear.type='button'; clear.addEventListener('click',()=>{recent=[];Storage.set('ps.recent',recent);renderRecent();}); row.appendChild(clear); panel.appendChild(row);
+  }
+  const fav = element('div','recent-favorites'); fav.textContent = currentLanguage==='en'?'FAVORITES: ':'รายการโปรด: ';
+  favorites.forEach(id=>{if(!TOOL_META[id])return;const b=element('button','',currentLanguage==='th'?TOOL_META[id][1]:TOOL_META[id][0]);b.type='button';b.dataset.go=id;fav.appendChild(b);});
+  panel.appendChild(fav);
+}
+function renderFavorites() {
+  document.querySelectorAll('.tool-card[data-go]').forEach(card=>{
+    const id=card.dataset.go; if(card.parentElement.classList.contains('tool-wrap'))return;
+    const wrap=element('div','tool-wrap'); wrap.dataset.g=id; card.parentNode.insertBefore(wrap,card); wrap.appendChild(card);
+    const star=element('button','star',favorites.includes(id)?'★':'☆');star.type='button';star.dataset.star=id;star.setAttribute('aria-label','Toggle favorite '+id);wrap.appendChild(star);
+  });
+}
+function toggleFavorite(id) {
+  favorites = favorites.includes(id) ? favorites.filter(x=>x!==id) : [...favorites,id];
+  Storage.set('ps.fav',favorites);
+  const button=document.querySelector('[data-star="'+CSS.escape(id)+'"]'); if(button)button.textContent=favorites.includes(id)?'★':'☆';
+  renderRecent();
+}
+function applyLanguage() {
+  document.documentElement.lang=currentLanguage;
+  $('lang').textContent=currentLanguage==='en'?'TH':'EN';
+  $('systemStatus').textContent=currentLanguage==='en'?'SYSTEM ONLINE':'ระบบออนไลน์';
+  $('hS')?.replaceChildren(document.createTextNode(currentLanguage==='en'?'Choose a module. Execute locally. Keep control.':'เลือกเครื่องมือ ประมวลผลภายในเครื่อง และควบคุมข้อมูลด้วยตัวเอง'));
+  const meta = document.querySelectorAll('.tool-card');
+  meta.forEach(card=>{
+    const id=card.dataset.go, title=card.querySelector('b'), desc=card.querySelector('small');
+    if(title&&TOOL_META[id])title.textContent=TOOL_META[id][0];
+    if(desc&&TOOL_META[id])desc.textContent=currentLanguage==='en'?TOOL_META[id][0]+' · LOCAL TOOL':TOOL_META[id][1];
+  });
+  document.querySelectorAll('#nav .nav-label').forEach((span,i)=>{span.textContent=currentLanguage==='th'?NAV[i][3]:NAV[i][1];});
+  renderRecent();
+}
+function initDashboard() {
+  renderNavigation(); renderFavorites(); applyLanguage();
+  document.addEventListener('click',event=>{
+    const goButton=event.target.closest('[data-go]'); if(goButton){go(goButton.dataset.go);return;}
+    const copyButton=event.target.closest('[data-copy]'); if(copyButton){const target=$(copyButton.dataset.copy);copyText(target ? target.textContent.trim() : '');return;}
+    const star=event.target.closest('[data-star]'); if(star){event.preventDefault();event.stopPropagation();toggleFavorite(star.dataset.star);}
+  });
+  document.addEventListener('change',event=>{
+    if(event.target.id==='recentToggle'){
+      Storage.set('ps.recoff',!event.target.checked); if(!event.target.checked){recent=[];Storage.set('ps.recent',recent);} renderRecent();
+    }
+  });
+  $('theme').addEventListener('click',()=>{const root=document.documentElement;const next=root.dataset.theme==='light'?'dark':'light';root.dataset.theme=next;Storage.set('ps.theme',next);});
+  const savedTheme=Storage.get('ps.theme','dark'); if(['dark','light'].includes(savedTheme))document.documentElement.dataset.theme=savedTheme;
+  $('lang').addEventListener('click',()=>{currentLanguage=currentLanguage==='en'?'th':'en';Storage.set('ps.lang',currentLanguage);applyLanguage();toast(currentLanguage==='en'?'Language: English':'ภาษา: ไทย');});
+  $('srch').addEventListener('input',()=>{const query=$('srch').value.trim().toLowerCase();document.querySelectorAll('.tool-wrap').forEach(w=>{w.hidden=!!query&&!w.textContent.toLowerCase().includes(query);});});
+  const section=location.hash.slice(1);go($(section)?section:'home');
+  window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if($(id))go(id);});
+}
+
+/* Password and passphrase */
+function strengthLabel(score){return ['VERY WEAK','WEAK','FAIR','STRONG','VERY STRONG'][Math.max(0,Math.min(4,score))];}
+function renderPasswordInfo(value, isPhrase=false) {
+  const bar=$('pwBar'), info=$('pwInfo');
+  if(isPhrase){const count=Number($('pwWords').value);const bits=C.passphraseBits(count);bar.style.width=Math.min(100,bits/100*100)+'%';bar.style.background='var(--green)';info.textContent=`PASSPHRASE · ${count} COMPOUND TOKENS · ${bits.toFixed(1)} BITS THEORETICAL SELECTION ENTROPY`;return;}
+  const estimate=C.estimatePassword(value);bar.style.width=(estimate.score*25)+'%';bar.style.background=estimate.score<=1?'var(--red)':estimate.score===2?'var(--amber)':'var(--green)';info.textContent='ESTIMATED STRENGTH: '+strengthLabel(estimate.score)+' · HEURISTIC ONLY';
+}
+function generateCredential(){
+  const phrase=$('cP').checked;let value;
+  if(phrase){value=C.generatePassphrase(Number($('pwWords').value));}
+  else{value=C.generatePassword({length:Number($('pwLen').value),upper:$('cU').checked,lower:$('cL').checked,numbers:$('cN').checked,symbols:$('cS').checked});}
+  setOutput('pwOut',value);renderPasswordInfo(value,phrase);$('pwPhraseInfo').textContent=phrase?`${$('pwWords').value} WORDS · ${C.WORD_A.length*C.WORD_B.length} POSSIBLE TOKENS PER WORD`:'Choose at least three character classes for stronger generated passwords.';
+}
+function initPassword(){
+  $('pwGen').addEventListener('click',()=>{try{generateCredential();toast('New credential generated locally');}catch(e){toast(e.message);}});
+  ['pwLen','cU','cL','cN','cS','cP','pwWords'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='pwLen')$('pwLenV').textContent=$('pwLen').value;try{generateCredential();}catch(e){toast(e.message);}}));
+  $('pwChk').addEventListener('input',()=>{
+    const p=$('pwChk').value;if(!p){setOutput('pwChkOut','');return;}
+    const estimate=C.estimatePassword(p);const labels=['VERY WEAK','WEAK','FAIR','STRONG','VERY STRONG'];
+    const box=element('div','strength-result');const badge=element('span','pill '+(estimate.score<=1?'bad':estimate.score===2?'mid':'good'),labels[estimate.score]);box.appendChild(badge);
+    const note=element('p','',estimate.reasons.length?estimate.reasons.join(' · '):'No obvious weak patterns detected by this local heuristic.');box.appendChild(note);$('pwChkOut').replaceChildren(box);
+  });
+  generateCredential();
+}
+
+/* AES-256-GCM text and file operations; OPS1 header remains compatible with previous releases. */
+function initAES(){
+  $('aEnc').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
+    const password=$('aPw').value,text=$('aTx').value;if(!password)throw new Error('กรุณาใส่รหัสผ่าน');if(!text)throw new Error('กรุณาใส่ข้อความ');
+    const encrypted=await C.seal(password,enc.encode(text));setOutput('aOut',C.b64(encrypted));toast('Text encrypted · local only');
+  }));
+  $('aDec').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
+    const password=$('aPw').value,text=$('aTx').value.trim();if(!password||!text)throw new Error('กรุณาใส่รหัสผ่านและ Base64');
+    const bytes=C.unb64(text),plain=await C.open(password,bytes);setOutput('aOut',dec.decode(plain));toast('Text decrypted');
+  }));
+  function selectedFile(maxBytes=MAX_FILE_BYTES){const file=$('aFile').files[0];if(!file)throw new Error('กรุณาเลือกไฟล์');if(file.size>maxBytes)throw new Error(`ไฟล์ใหญ่เกิน ${Math.floor(maxBytes/1024/1024)} MB เพื่อป้องกันหน่วยความจำมือถือ`);return file;}
+  $('aFEnc').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
+    const file=selectedFile(),password=$('aPw').value;if(!password)throw new Error('กรุณาใส่รหัสผ่าน');
+    const bytes=new Uint8Array(await file.arrayBuffer());try{const encrypted=await C.seal(password,bytes);downloadFile(file.name+'.obx',encrypted);}finally{bytes.fill(0);}
+  }));
+  $('aFDec').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
+    const file=selectedFile(MAX_FILE_BYTES+53),password=$('aPw').value;if(!password)throw new Error('กรุณาใส่รหัสผ่าน');if(!file.name.toLowerCase().endsWith('.obx'))throw new Error('เลือกไฟล์ .obx ที่เข้ารหัสไว้');
+    const ciphertext=new Uint8Array(await file.arrayBuffer());let plain;try{plain=await C.open(password,ciphertext);const name=file.name.replace(/\.obx$/i,'')||'decrypted.bin';downloadFile(name,plain);}finally{ciphertext.fill(0);if(plain)plain.fill(0);}
+  }));
+}
+function initHash(){
+  $('hGo').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
+    const file=$('hFile').files[0],text=$('hTx').value;if(!file&&!text)throw new Error('กรุณาใส่ข้อความหรือเลือกไฟล์');
+    if(file&&file.size>100*1024*1024)throw new Error('ไฟล์ใหญ่เกิน 100 MB สำหรับการคำนวณบนมือถือ');
+    const data=file?await file.arrayBuffer():enc.encode(text);const digest=new Uint8Array(await crypto.subtle.digest($('hAlg').value,data));const hex=Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');setOutput('hOut',hex);compareHash();
+  }));
+  $('hCmp').addEventListener('input',compareHash);
+  $('hDl').addEventListener('click',()=>{const hash=$('hOut').textContent.trim();if(!hash)return toast('No digest to download');downloadFile('obix-hash.txt',enc.encode($('hAlg').value+': '+hash+'\n'),'text/plain');});
+}
+function compareHash(){const actual=$('hOut').textContent.trim().toLowerCase(),expected=$('hCmp').value.trim().toLowerCase();const output=$('hCmpOut');output.replaceChildren();if(!actual||!expected)return;output.appendChild(element('span','pill '+(actual===expected?'good':'bad'),actual===expected?'MATCH':'MISMATCH'));}
+function initURL(){
+  $('uGo').addEventListener('click',()=>{
+    try{const result=C.inspectUrl($('uIn').value);const root=element('div','result-card');
+      const head=element('h3','',`RISK LEVEL // ${result.level}`);head.className=''+(result.level==='LOW'?'green-text':result.level==='MEDIUM'?'':'danger-text');root.appendChild(head);
+      root.appendChild(element('p','',`HOST: ${result.hostname}`));root.appendChild(element('p','',`RISK SIGNAL SCORE: ${result.score}`));
+      if(result.schemeAssumed)root.appendChild(element('p','',`NOTICE: No scheme provided; HTTPS was assumed for analysis.`));
+      const list=element('ul');if(result.signals.length)result.signals.forEach(s=>list.appendChild(element('li','',s)));else list.appendChild(element('li','','No suspicious patterns detected by these local rules.'));
+      root.appendChild(list);root.appendChild(element('p','micro-help','This heuristic does not visit the URL, inspect page content, query threat intelligence, or guarantee safety. Never open an unexpected link solely because its score is low.'));$('uOut').replaceChildren(root);
+    }catch(error){setOutput('uOut',error.message);}
+  });
+}
+function initJWT(){
+  $('jGo').addEventListener('click',()=>{
+    try{const data=C.decodeJwt($('jIn').value);const out=$('jOut');out.replaceChildren();
+      const now=Math.floor(Date.now()/1000),exp=data.payload.exp;
+      if(typeof exp==='number')out.appendChild(element('p','result-text',exp<now?'TOKEN TIME CHECK: EXPIRED (signature NOT verified)':'TOKEN TIME CHECK: not expired by local clock (signature NOT verified)'));
+      else out.appendChild(element('p','result-text','No numeric exp claim. Signature is NOT verified.'));
+      [['HEADER',data.header],['PAYLOAD',data.payload]].forEach(([label,value])=>{out.appendChild(element('h3','eyebrow',label));const pre=element('pre','output-field multiline',JSON.stringify(value,null,2));out.appendChild(pre);});
+      out.appendChild(element('p','note','Decode is not signature verification. Treat all claims as untrusted until verified by the proper issuer and key.'));
+    }catch(error){setOutput('jOut',error.message);}
+  });
+}
+function initHeaders(){
+  $('xGo').addEventListener('click',()=>{
+    const result=C.analyzeHeaders($('xIn').value);const root=element('div','result-card');
+    result.checks.forEach(check=>{const row=element('p','');const badge=element('span','pill '+(check.ok?'good':'bad'),check.ok?'PRESENT':'MISSING');row.append(badge,document.createTextNode(' '+check.name+' — '+check.detail));root.appendChild(row);});
+    if(result.cookies.length){root.appendChild(element('h3','eyebrow','COOKIE FLAGS'));result.cookies.forEach(cookie=>{root.appendChild(element('p','',`${cookie.name}: Secure ${cookie.secure?'✓':'✕'} · HttpOnly ${cookie.httpOnly?'✓':'✕'} · SameSite ${cookie.sameSite?'✓':'✕'}`));});}
+    $('xOut').replaceChildren(root);
+  });
+}
+function initQR(){
+  $('qUploadBtn').addEventListener('click',()=>$('qFile').click());
+  function showDecoded(value){stopCamera();const text=String(value||'').slice(0,2000);if(/^(https?:\/\/|www\.)/i.test(text)||/^[a-z0-9.-]+\.[a-z]{2,}(?:[\/?#]|$)/i.test(text)){$('uIn').value=text;go('url');$('uGo').click();toast('QR decoded · inspect the URL before opening');}else setOutput('qMsg','DECODED TEXT: '+text);}
+  async function getDetector(){if(!('BarcodeDetector' in window))throw new Error('This browser does not support BarcodeDetector. Try a supported Chromium browser. No external fallback is used.');return new BarcodeDetector({formats:['qr_code']});}
+  $('qCam').addEventListener('click',async()=>{
+    const msg=$('qMsg');msg.textContent='';
+    if(!window.isSecureContext){msg.textContent='Camera access requires HTTPS or localhost.';return;}
+    if(!navigator.mediaDevices?.getUserMedia){msg.textContent='Camera API is not available in this browser.';return;}
+    if(cameraStream)stopCamera();
+    try{const detector=await getDetector();cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});const video=$('qV');video.srcObject=cameraStream;video.style.display='block';await video.play();
+      const scan=async()=>{if(!cameraStream)return;try{const codes=await detector.detect(video);if(codes.length){showDecoded(codes[0].rawValue);return;}}catch(_){}scanFrame=requestAnimationFrame(scan);};scan();
+    }catch(error){stopCamera();msg.textContent=error.name==='NotAllowedError'?'Camera permission denied. Allow camera access in browser site settings.':error.name==='NotFoundError'?'No camera found on this device.':(error.message||'Unable to start camera.');}
+  });
+  $('qStop').addEventListener('click',()=>{stopCamera();setOutput('qMsg','SCANNER STOPPED.');});
+  $('qFile').addEventListener('change',async event=>{
+    const file=event.target.files?.[0];if(!file)return;
+    try{if(!file.type.startsWith('image/'))throw new Error('Please select an image file.');if(file.size>10*1024*1024)throw new Error('QR image is larger than the 10 MB safety limit.');if(!('createImageBitmap' in window))throw new Error('Image decoding is not supported by this browser.');const detector=await getDetector();const bitmap=await createImageBitmap(file);try{const codes=await detector.detect(bitmap);if(!codes.length)throw new Error('No QR code found in this image.');showDecoded(codes[0].rawValue);}finally{bitmap.close();}}
+    catch(error){setOutput('qMsg',error.message||'Unable to decode this image.');}
+    finally{event.target.value='';}
+  });
+  window.addEventListener('pagehide',stopCamera);
+}
+function initDeveloper(){
+  const dev={
+    b64e:s=>C.b64(enc.encode(s)),b64d:s=>dec.decode(C.unb64(s)),ue:encodeURIComponent,ud:decodeURIComponent,he:s=>s.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])),
+    hd:s=>s.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi,(match,entity)=>{const key=entity.toLowerCase();if(key==='amp')return '&';if(key==='lt')return '<';if(key==='gt')return '>';if(key==='quot')return '"';if(key==='apos')return "'";const numeric=key.startsWith('#x')?parseInt(key.slice(2),16):parseInt(key.slice(1),10);try{return Number.isInteger(numeric)&&numeric>0&&numeric<=0x10ffff?String.fromCodePoint(numeric):match;}catch(_){return match;}}),js:s=>JSON.stringify(JSON.parse(s),null,2),
+    ts:s=>{if(!s.trim())return `ISO: ${new Date().toISOString()}\nUNIX: ${Math.floor(Date.now()/1000)}`;if(/^-?\d+$/.test(s.trim())){const n=Number(s),date=new Date(Math.abs(n)>1e11?n:n*1000);if(Number.isNaN(date.valueOf()))throw new Error('Invalid timestamp');return `ISO: ${date.toISOString()}\nLOCAL: ${date.toLocaleString()}`;}const date=new Date(s);if(Number.isNaN(date.valueOf()))throw new Error('Invalid date');return `UNIX: ${Math.floor(date.getTime()/1000)}\nISO: ${date.toISOString()}`;},
+    uuid:()=>crypto.randomUUID(),tok:()=>C.b64(crypto.getRandomValues(new Uint8Array(32))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,''),
+    diff:()=>{const a=$('dIn').value.split('\n'),b=$('dIn2').value.split('\n'),lines=[];for(let i=0;i<Math.max(a.length,b.length);i++){if(a[i]===b[i])lines.push('  '+(a[i]||''));else{if(a[i]!==undefined)lines.push('- '+a[i]);if(b[i]!==undefined)lines.push('+ '+b[i]);}}return lines.join('\n');},
+    col:s=>{const input=s.trim();let r,g,b;const hex=/^#?([0-9a-f]{6})$/i.exec(input);if(hex){const n=parseInt(hex[1],16);r=n>>16;g=(n>>8)&255;b=n&255;}else{const values=input.split(/[\s,]+/).map(Number);if(values.length!==3||values.some(v=>!Number.isInteger(v)||v<0||v>255))throw new Error('Use #RRGGBB or R,G,B values from 0 to 255');[r,g,b]=values;}const max=Math.max(r,g,b)/255,min=Math.min(r,g,b)/255,d=max-min,l=(max+min)/2;let h=0,sat=0;if(d){sat=d/(1-Math.abs(2*l-1));if(max===r/255)h=(((g-b)/255)/d)%6;else if(max===g/255)h=((b-r)/255)/d+2;else h=((r-g)/255)/d+4;h=Math.round((h*60+360)%360);}return `#${[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('')}\nrgb(${r}, ${g}, ${b})\nhsl(${h}, ${Math.round(sat*100)}%, ${Math.round(l*100)}%)`;}
+  };
+  document.querySelectorAll('[data-d]').forEach(button=>button.addEventListener('click',()=>{try{setOutput('dOut',dev[button.dataset.d]($('dIn').value));}catch(error){showError('dOut',error.message||'Unable to process input');}}));
+}
+function initLab(){
+  $('sqGo').addEventListener('click',()=>{
+    const user=$('sqU').value,pass=$('sqP').value,safe=$('sqSafe').checked;
+    const query=safe?'SELECT * FROM users WHERE name = ? AND pass = ?':`SELECT * FROM users WHERE name = '${user}' AND pass = '${pass}'`;
+    const bypass=!safe&&(/'\s*(--|#)/.test(user)||/'\s*or\s+'?(\w+)'?\s*=\s*'?\1/i.test(user+pass));
+    const valid=user==='admin'&&pass==='S3cret!';
+    const output=$('sqOut');output.replaceChildren(element('pre','output-field multiline',query));
+    output.appendChild(element('p','result-text',bypass?'SIMULATION: Injection changes the query logic. Use parameterized queries.':valid?'SIMULATION: demo credentials matched.':'SIMULATION: authentication failed.'));
+    if(safe)output.appendChild(element('p','micro-help','Safe mode keeps user values separate from SQL statement structure.'));
+  });
+  $('xsGo').addEventListener('click',()=>{
+    const value=$('xsI').value,safe=$('xsSafe').checked,risky=/<\s*script|<[^>]+\son\w+\s*=|javascript:/i.test(value);
+    const output=$('xsOut');output.replaceChildren(element('h3','eyebrow','RENDERED AS INERT TEXT'));
+    output.appendChild(element('pre','output-field multiline',safe?value.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])):value));
+    output.appendChild(element('p','result-text',risky?'SIMULATION: input contains markup/event-handler patterns. The app displays it as text and never executes it.':'No obvious executable markup pattern detected by this simple demo.'));
+  });
+  $('ivGo').addEventListener('click',()=>{const value=$('ivInput').value;const valid=value.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);resultCard('ivOut',valid?'INPUT PASSED SAMPLE CHECK':'INPUT REJECTED',['This is a local format demonstration only.','Validate and normalize input again on the server in real applications.'],valid?'good':'bad');});
+  $('cookieGo').addEventListener('click',()=>{const value=$('cookieInput').value;const flags=[['Secure',/;\s*secure(?:;|$)/i.test(value)],['HttpOnly',/;\s*httponly(?:;|$)/i.test(value)],['SameSite',/;\s*samesite=(strict|lax|none)(?:;|$)/i.test(value)]];const output=$('cookieOut');output.replaceChildren();const card=element('div','result-card');card.appendChild(element('h3','', 'COOKIE ATTRIBUTE AUDIT'));flags.forEach(([name,ok])=>{const line=element('p','');line.append(element('span','pill '+(ok?'good':'bad'),ok?'PRESENT':'MISSING'),document.createTextNode(' '+name));card.appendChild(line);});const none=/;\s*samesite=none(?:;|$)/i.test(value);if(none&&!flags[0][1])card.appendChild(element('p','note','SameSite=None requires Secure in modern browsers.'));card.dataset.tone=flags.every(x=>x[1])?'good':'bad';output.appendChild(card);});
+}
+function initPrivacy(){
+  $('clearLocal').addEventListener('click',()=>{if(!confirm('Clear theme, language, favorites and recent module names stored on this device?'))return;['ps.lang','ps.fav','ps.recent','ps.recoff','ps.theme'].forEach(Storage.remove);location.reload();});
+}
+function boot(){
+  if(!C){toast('Security core failed to load');return;}
+  initDashboard();initPassword();initAES();initHash();initURL();initJWT();initHeaders();initQR();initDeveloper();initLab();initPrivacy();
+  if('serviceWorker' in navigator && window.isSecureContext){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').then(reg=>{reg.addEventListener('updatefound',()=>toast('Update available — reload after the new version installs.'));}).catch(()=>toast('Offline mode unavailable in this browser.')));}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
