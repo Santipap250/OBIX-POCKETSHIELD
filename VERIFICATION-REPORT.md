@@ -24,7 +24,7 @@ The app was served from `http://127.0.0.1:8080` and opened in Chromium. Browser 
 - JWT decoder returned the payload and the UI remains explicitly non-verifying.
 - Header analyzer identified six supplied security checks.
 - QR flow displayed the explicit unsupported `BarcodeDetector` message in this browser; no fallback upload or external decoder was invoked.
-- Service Worker was registered and controlling the page; cache `obix-pocketshield-hacker-v1.0.2` existed in the browser.
+- Service Worker was registered and controlling the page; cache `tuizack-cyber-v1.0.3` existed in the browser.
 - Fixed a production UX issue found during deployment smoke testing: the first Service Worker installation no longer shows a misleading “Update available” toast; that toast now appears only for a real update when an existing controller is present.
 - Chromium screenshots were captured and visually checked at 320px, 390px, 768px and 1440px. No horizontal overflow was observed in the inspected screenshots.
 
