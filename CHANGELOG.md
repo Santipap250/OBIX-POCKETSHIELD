@@ -16,3 +16,11 @@
 - Premium mobile-first responsive dashboard and browser-local security utilities.
 - QR generator, URL analysis, AES file/text encryption, hashing, and cyber lab simulations.
 - PWA installation and offline app shell.
+
+
+## TUIzACK rebrand — unreleased
+
+- Rebranded the user-facing product identity from OBIX POCKETSHIELD to TUIzACK.
+- Added an in-app How to use guide with quick-start flow, module overview, privacy rules and honest limitations.
+- Added a cyan TUIzACK signature layer, animated scanline/grid atmosphere, console motion, card transitions, focus states and reduced-motion fallback.
+- Preserved existing tool IDs, cryptographic behavior, OPS1 compatibility, local-only privacy boundary and safe cyber-lab behavior.
