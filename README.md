@@ -1,70 +1,66 @@
-# OBIX POCKETSHIELD v1.0.1
+# OBIX POCKETSHIELD v1.0.2 — CYBER OPS
 
-**Private Security Suite — premium, mobile-first, browser-local PWA.**
+**Privacy-first hacker-style security toolkit and installable PWA.**
 
-OBIX POCKETSHIELD is a static web application. Core tools process data locally in the browser; no account, database, required API key, paid backend, or analytics service is included.
+OBIX POCKETSHIELD is a static application that performs its security and developer utilities in the browser. It has no account requirement, paid API dependency, backend database, analytics or tracking service.
 
-## Included tools
+## Modules
 
-- Secure password and passphrase generator, plus a local strength estimate
-- AES-256-GCM text and file encryption using PBKDF2-SHA256 (600,000 iterations)
-- SHA-256 / SHA-384 / SHA-512 hashing and digest comparison
-- Local URL pattern analysis, including known brand-domain lookalikes and malformed encodings
-- JWT Header/Payload decoder (does **not** verify signatures)
-- HTTP Security Header and Set-Cookie analyzer for headers supplied by the user
-- QR generator (local encoder, up to 78 ASCII bytes; non-ASCII text uses UTF-8 ECI with capacity based on encoded byte length) and QR scanner using the browser's `BarcodeDetector` API where supported
-- Developer tools: Base64, URL, HTML entity, JSON, timestamp, UUID, color, text compare, random token
-- Safe Cyber Lab simulations: SQL Injection, XSS, input validation, Cookie flags, and session guidance
-- Responsive premium dashboard, theme preference, favorites, recent tools, Thai-first interface, and optional English navigation/tool headings
-- PWA manifest and offline service worker cache
+- **Password Lab:** CSPRNG password generation, 6,400-token passphrase combinations (6–10 tokens), conservative local strength categories.
+- **AES Encryption:** AES-256-GCM with PBKDF2-SHA256 (600,000 rounds), random salt and IV, authenticated `.obx` output. The OPS1 v1 file format remains compatible with v1.0.0/v1.0.1. File input is limited to 15 MiB for mobile memory safety.
+- **Hash Engine:** SHA-256, SHA-384 and SHA-512 text/file digests and checksum comparison.
+- **URL Inspector:** local heuristic inspection for HTTP, credentials in URLs, IP hosts, shorteners, Punycode, malformed percent encoding and known brand lookalikes. It does not visit destinations or query live reputation feeds.
+- **JWT Inspector:** decodes header and payload only. It does not verify signatures.
+- **Header Audit:** parses user-supplied HTTP response headers and cookie flags; it does not make requests to target sites.
+- **QR Scanner:** uses the browser `BarcodeDetector` API for camera and image decoding. Browser support is not universal; unsupported browsers receive a clear message. No image is uploaded and no third-party decoder fallback is included in this release.
+- **Safe Cyber Lab:** inert SQL Injection, XSS, input validation and cookie simulations, plus session-security guidance.
+- **Dev Toolbox:** Base64, URL, HTML entity, JSON, timestamp, UUID, color, text diff and random token utilities.
 
 ## Run locally
 
-Requires Node.js 18+ for tests. No dependencies or install step are needed.
+Requires Node.js 20 or later. There are no runtime dependencies.
 
 ```bash
+npm ci
 npm test
 npm run build
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080`. Camera access requires HTTPS or localhost.
+Open `http://localhost:8080`. Camera and Web Crypto features require HTTPS or localhost.
 
-## GitHub + Vercel deployment
+## GitHub and Vercel
 
-1. Create or open the GitHub repository.
-2. Upload the contents of this folder to the repository root (not the enclosing folder).
-3. In Vercel choose **Add New → Project**, then import the repository.
-4. Choose **Other** as the framework preset.
-5. Build Command: `npm run build` (or leave blank; the app is static).
-6. Output Directory: `.` (repository root).
-7. No environment variables are required. Deploy.
+1. Upload the **contents** of this folder to the repository root (the folder must not be nested one level deeper).
+2. Connect the repository to Vercel, Framework Preset `Other`.
+3. Build Command: `npm run build`.
+4. Output Directory: `.`.
+5. No environment variables are required.
 
-Vercel applies the security headers in `vercel.json`. Camera access is allowed only to the same origin; microphone and geolocation remain disabled. Pushes to the connected branch trigger automatic deployments.
+GitHub Actions runs `npm ci`, `npm test`, and `npm run build` for pushes and pull requests. Vercel can deploy from `main` after the branch is updated.
 
-## Install as an app
+## Install as a PWA
 
-- Android: open the deployed HTTPS site in Chrome → menu → Install app / Add to Home screen.
-- iPhone: open in Safari → Share → Add to Home Screen.
-- Desktop: use the browser's install action where supported.
+- Android: open the HTTPS site in Chrome, then use **Install app** / **Add to Home screen**.
+- iPhone: open in Safari, use **Share → Add to Home Screen**.
+- Desktop: use the browser install command where supported.
 
-## Privacy and technical limits
+Load the app once while online before testing its offline app shell.
 
-- Passwords, encryption keys, plaintext, selected files, QR images, and URLs are not uploaded by the application.
-- Preferences, favorites, and recent tool names may be saved in local browser storage; users can turn off recent activity or clear local preferences.
-- QR generation is fully local and supports payloads up to 78 ASCII bytes (UTF-8 ECI is used for non-ASCII text; capacity depends on encoded byte length) (QR versions 1–4, error-correction level L).
-- The URL scanner is a **heuristic pattern checker**, not a reputation database, malware scanner, or guarantee of safety. It does not visit the URL.
-- QR scanning depends on browser support for `BarcodeDetector`; Chrome on many Android devices supports it, but support is not universal. The app does not send images to a third party as a fallback.
-- Web Crypto requires a secure context (HTTPS or localhost).
-- File encryption is limited to 50 MB to reduce memory pressure on phones. Files created by v1.0.0 use the same `.obx` format and remain compatible.
-- AES-GCM files cannot be recovered if the user loses the password.
-- JWT decoding is not signature verification.
-- This app cannot scan the whole phone, installed applications, operating-system files, Wi-Fi networks, or malware on the device. It is not an antivirus product.
-- Cyber Lab exercises are local simulations only; they do not attack external systems.
+## Privacy and limitations
+
+- Passwords, encryption keys, plaintext, files and QR images are not uploaded by the application.
+- Theme, language, favorites and recent module names may be stored in local browser storage. These can be cleared in Privacy Protocol.
+- Password strength is a conservative heuristic, not a breach-database lookup or an exact entropy measurement.
+- Passphrase theoretical selection entropy assumes uniform selection from the 6,400 unique compound tokens.
+- The URL Inspector is not antivirus, a phishing blocklist, live threat intelligence or a guarantee of safety.
+- QR decoding depends on browser support for `BarcodeDetector`; actual camera behavior must be checked on the target devices.
+- The app cannot scan all installed apps, operating-system files, device malware, Wi-Fi traffic or hidden device settings. It is not an antivirus product.
+- Cyber Lab tools are educational simulations only and do not attack external systems.
 
 ## Tests
 
-`npm test` runs AES, Hash, QR, URL-analysis, and project-integrity regression tests. `npm run build` validates required assets, JavaScript syntax, JSON configuration, and the absence of inline event handlers. Manual browser/device checks are still required for actual camera permissions and install prompts.
+`npm test` covers password regressions, passphrase vocabulary, AES-GCM integrity and legacy OPS1 compatibility, hashing, URL false-positive/malformed-input cases, JWT parsing, DOM references, CSP/Permissions Policy and PWA precache assets. `npm run build` performs static release validation. Physical camera, PWA installation and offline behavior still require real-device verification after deployment.
 
 ## License
 
