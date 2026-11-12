@@ -215,7 +215,7 @@ function initHash(){
     const data=file?await file.arrayBuffer():enc.encode(text);const digest=new Uint8Array(await crypto.subtle.digest($('hAlg').value,data));const hex=Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');setOutput('hOut',hex);compareHash();
   }));
   $('hCmp').addEventListener('input',compareHash);
-  $('hDl').addEventListener('click',()=>{const hash=$('hOut').textContent.trim();if(!hash)return toast('No digest to download');downloadFile('obix-hash.txt',enc.encode($('hAlg').value+': '+hash+'\n'),'text/plain');});
+  $('hDl').addEventListener('click',()=>{const hash=$('hOut').textContent.trim();if(!hash)return toast('No digest to download');downloadFile('tuizack-hash.txt',enc.encode($('hAlg').value+': '+hash+'\n'),'text/plain');});
 }
 function compareHash(){const actual=$('hOut').textContent.trim().toLowerCase(),expected=$('hCmp').value.trim().toLowerCase();const output=$('hCmpOut');output.replaceChildren();if(!actual||!expected)return;output.appendChild(element('span','pill '+(actual===expected?'good':'bad'),actual===expected?'MATCH':'MISMATCH'));}
 function initURL(){
