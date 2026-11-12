@@ -191,11 +191,11 @@ function initPassword(){
 /* AES-256-GCM text and file operations; OPS1 header remains compatible with previous releases. */
 function initAES(){
   $('aEnc').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
-    const password=$('aPw').value,text=$('aTx').value;if(!password)throw new Error('กรุณาใส่รหัสผ่าน');if(!text)throw new Error('กรุณาใส่ข้อความ');
+    setOutput('aOut','');const password=$('aPw').value,text=$('aTx').value;if(!password)throw new Error('กรุณาใส่รหัสผ่าน');if(!text)throw new Error('กรุณาใส่ข้อความ');
     const encrypted=await C.seal(password,enc.encode(text));setOutput('aOut',C.b64(encrypted));toast('Text encrypted · local only');
   }));
   $('aDec').addEventListener('click',event=>withBusy(event.currentTarget,async()=>{
-    const password=$('aPw').value,text=$('aTx').value.trim();if(!password||!text)throw new Error('กรุณาใส่รหัสผ่านและ Base64');
+    setOutput('aOut','');const password=$('aPw').value,text=$('aTx').value.trim();if(!password||!text)throw new Error('กรุณาใส่รหัสผ่านและ Base64');
     const bytes=C.unb64(text),plain=await C.open(password,bytes);setOutput('aOut',dec.decode(plain));toast('Text decrypted');
   }));
   function selectedFile(maxBytes=MAX_FILE_BYTES){const file=$('aFile').files[0];if(!file)throw new Error('กรุณาเลือกไฟล์');if(file.size>maxBytes)throw new Error(`ไฟล์ใหญ่เกิน ${Math.floor(maxBytes/1024/1024)} MB เพื่อป้องกันหน่วยความจำมือถือ`);return file;}
